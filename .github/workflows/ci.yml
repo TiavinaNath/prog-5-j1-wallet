@@ -1,0 +1,44 @@
+name: Checkstyle Linter
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  checkstyle:
+    name: Run Checkstyle
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Download Checkstyle JAR
+        run: |
+          curl -L -o checkstyle.jar https://github.com/checkstyle/checkstyle/releases/download/checkstyle-10.21.0/checkstyle-10.21.0-all.jar
+
+      - name: Download Google Checks config
+        run: |
+          curl -L -o google_checks.xml https://raw.githubusercontent.com/checkstyle/checkstyle/checkstyle-10.21.0/src/main/resources/google_checks.xml
+
+      - name: List Java files found
+        run: |
+          git ls-files '*.java' || true
+
+      - name: Run Checkstyle
+        run: |
+          files=$(git ls-files '*.java')
+          if [ -z "$files" ]; then
+            echo "No Java files to check."
+            exit 0
+          fi
+          echo "Running Checkstyle on: $files"
+          java -jar checkstyle.jar -c google_checks.xml $files
